@@ -61,10 +61,9 @@ class User {
 
 const users = [];
 
-for (let i = 0; i < 1000; i++) {
+for (let i = 0; i < 10000; i++) {
   const user = new User(`User${i}`, `user${i}@mail.com`);
   users.push(user);
-  console.log(user);
 }
 
 fs.writeFileSync("users.json", JSON.stringify(users, null, 2));

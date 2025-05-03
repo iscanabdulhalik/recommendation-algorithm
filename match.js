@@ -23,7 +23,16 @@ function calculateScore(mainUser, candidate, currentTime, weights) {
   const mainHobbies = extractHobbies(mainUser);
   const candidateHobbies = extractHobbies(candidate);
   const commonHobbies = mainHobbies.filter((h) => candidateHobbies.includes(h));
-  const scoreHobby = commonHobbies.length > 0 ? 1 : 0;
+
+  // hobi skoru hesaplama - ortak hobi sayısına göre 0 ile 1 arasında değer
+  const maxPossibleCommonHobbies = Math.min(
+    mainHobbies.length,
+    candidateHobbies.length
+  );
+  const scoreHobby =
+    maxPossibleCommonHobbies > 0
+      ? commonHobbies.length / maxPossibleCommonHobbies
+      : 0;
 
   const total =
     weights.recency * scoreRecency +
@@ -49,9 +58,9 @@ function findMatchesWithScoring(mainUserId, allUsers, topN = 5) {
   }
 
   const currentTime = Date.now();
-  const weights = { recency: 0.4, age: 0.3, hobby: 0.3 }; //ağırlıkları bu şekilde belirledim
+  const weights = { recency: 0.4, age: 0.3, hobby: 0.3 };
 
-  const matches = allUsers
+  let matches = allUsers
     .filter(
       (user) =>
         user.name !== mainUser.name &&
@@ -69,10 +78,31 @@ function findMatchesWithScoring(mainUserId, allUsers, topN = 5) {
     .sort((a, b) => b.score - a.score)
     .slice(0, topN);
 
+  // Eğer hiç eşleşme bulunamazsa, rastgele kullanıcıları eşleştir
+  if (matches.length === 0) {
+    console.log(
+      "Uygun dil eşleşmesi bulunamadı. Rastgele eşleşmeler öneriliyor..."
+    );
+
+    matches = allUsers
+      .filter((user) => user.name !== mainUser.name)
+      .map((user) => {
+        const scoreData = calculateScore(mainUser, user, currentTime, weights);
+        return {
+          user,
+          score: scoreData.total,
+          scores_detail: scoreData.details,
+          random_match: true, // Rastgele eşleşme olduğunu belirtmek için
+        };
+      })
+      .sort(() => 0.5 - Math.random()) // Rastgele sırala
+      .slice(0, topN);
+  }
+
   return matches;
 }
 
-const mainUserName = "User6";
+const mainUserName = "User9997";
 const top5Matches = findMatchesWithScoring(mainUserName, users, 5);
 
 console.log(`\n📊 En iyi 5 eşleşme (${mainUserName} için):`);
